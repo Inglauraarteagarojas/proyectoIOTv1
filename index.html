@@ -1,232 +1,116 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#0b1930">
-<meta name="description" content="Panel de dos estaciones ESP32-C5 con sensores BME680 y Firebase Realtime Database">
-<title>ESP Casa | Monitor ambiental · 2 BME680</title>
+<title>ESP32V2 | BME680</title>
 <style>
-:root {font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#172842;background:#f1f5fa;font-synthesis:none;-webkit-font-smoothing:antialiased}
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0}button{font:inherit}button:focus-visible{outline:3px solid #93c5fd;outline-offset:3px}
-.topbar{background:#0b1930;color:#fff;position:relative;overflow:hidden;isolation:isolate}
-.topbar:before{content:"";position:absolute;width:560px;height:410px;right:-180px;top:-160px;background:radial-gradient(circle,#1b496a 0%,transparent 70%);opacity:.86;z-index:-1}
-.topbar:after{content:"";position:absolute;width:500px;height:300px;left:27%;bottom:-260px;background:radial-gradient(circle,#2569a4 0%,transparent 65%);opacity:.26;z-index:-1}
-.top-inner{max-width:1480px;margin:auto;padding:26px 34px 31px}
-.brandrow{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
-.brand{display:flex;align-items:center;gap:11px;font-weight:770;letter-spacing:.09em;font-size:12px}
-.brand-icon{width:30px;height:30px;border:1px solid #446b92;border-radius:10px;display:grid;place-items:center;color:#70d8d1;background:#15334d}
-.top-note{border:1px solid #38516a;border-radius:22px;padding:9px 14px;display:flex;gap:9px;align-items:center;background:rgba(255,255,255,.035);color:#b8cbe1;font-size:12px}
-.live-pulse{width:8px;height:8px;border-radius:50%;background:#93a8ba;box-shadow:0 0 0 4px #a4b6d018}.live-pulse.ok{background:#59d6af;box-shadow:0 0 0 4px #59d6af20}.live-pulse.error{background:#fca5a5}
-.header-bottom{display:flex;align-items:flex-end;justify-content:space-between;gap:22px;flex-wrap:wrap;margin-top:27px}
-.eyebrow{color:#84dcd4;font-weight:770;font-size:11px;letter-spacing:.15em;margin-bottom:7px;text-transform:uppercase}
-h1{font-size:clamp(28px,3.2vw,42px);font-weight:790;letter-spacing:-.05em;margin:0 0 7px;line-height:1.15}
-.header-bottom p{color:#b7cce1;margin:0;font-size:14px;line-height:1.6}
-.header-stat{display:flex;gap:23px;align-items:center;padding-bottom:3px;flex-wrap:wrap}
-.header-stat .value{display:block;font-size:25px;letter-spacing:-.04em;font-weight:740;color:white}.header-stat .caption{font-size:11px;color:#94abc1}
-main{max-width:1480px;margin:auto;padding:29px 34px 52px}
-.control-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:15px;margin:0 0 19px}
-.section-intro{display:flex;align-items:center;gap:12px}.section-intro h2{font-size:18px;letter-spacing:-.025em;margin:0}.section-intro p{color:#65778c;font-size:12px;margin:3px 0 0}
-.periods{background:#fff;display:flex;gap:3px;align-items:center;border:1px solid #dce5f0;border-radius:11px;padding:4px;box-shadow:0 2px 10px #17305005}
-.periods span{font-size:11px;color:#6c8094;padding:0 8px}
-.periods button{color:#64778c;border:0;background:transparent;padding:7px 10px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:660}
-.periods button.active{color:#0e4f87;background:#e3f1fe}
-.demo-banner{margin-bottom:16px;border:1px solid #f2d18c;background:#fff9ea;border-radius:11px;padding:12px 16px;font-size:13px;color:#815617;display:none}.demo-banner.show{display:block}
-.stations{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:23px;align-items:start}
-.station{min-width:0;background:white;border-radius:19px;border:1px solid #dae4ef;overflow:hidden;box-shadow:0 12px 44px #1d385708}
-.station-head{border-bottom:1px solid #e9eef5;padding:20px 24px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px;background:linear-gradient(110deg,#fff,#f9fbfe)}
-.station-info{display:flex;align-items:center;gap:13px}.station-index{width:42px;height:42px;display:grid;place-items:center;border-radius:13px;color:#14638e;font-size:20px;font-weight:780;background:#e5f4fb}
-.station:nth-child(2) .station-index{background:#eaf3ed;color:#25745e}
-.station-type{font-size:10px;font-weight:780;letter-spacing:.11em;color:#8193a8;text-transform:uppercase}.station-head h3{margin:3px 0 2px;font-size:19px;letter-spacing:-.035em;line-height:1.2}.station-code{font-size:11px;color:#8b9caf;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
-.status{font-size:11px;border-radius:30px;padding:8px 11px;font-weight:750;background:#eff3f7;color:#687e91;white-space:nowrap;display:flex;gap:7px;align-items:center}.status:before{content:"";width:7px;height:7px;border-radius:50%;background:#a7b4c1}.status.good{background:#e6f7ee;color:#177d57}.status.good:before{background:#23b780}.status.warn{background:#fff4dd;color:#a16b12}.status.warn:before{background:#e3ab36}.status.error{background:#ffecec;color:#a53e42}.status.error:before{background:#ed6267}
-.metrics{padding:18px 20px 17px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.metric{border:1px solid #eaf0f6;border-radius:12px;padding:14px 14px 13px;background:#f7f9fc;position:relative;overflow:hidden}
-.metric:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--metric-accent,#57a8df)}
-.metric-label{color:#667a90;font-size:12px;font-weight:610}.metric-num{font-size:clamp(22px,2.6vw,32px);font-weight:770;letter-spacing:-.055em;color:#1b3550;margin-top:6px;font-variant-numeric:tabular-nums;white-space:nowrap}.metric-unit{font-size:12px;color:#7a91a6;font-weight:600;letter-spacing:0}.metric:nth-child(2){--metric-accent:#38b49a}.metric:nth-child(3){--metric-accent:#9277db}.metric:nth-child(4){--metric-accent:#f29a71}
-.viz-row{display:grid;grid-template-columns:1.25fr .8fr;gap:14px;padding:1px 20px 20px}
-.vizpanel{background:white;border:1px solid #e4ecf4;border-radius:14px;min-width:0;overflow:hidden}
-.viz-title{font-size:12px;font-weight:750;color:#263e56;margin:15px 14px 0}.viz-sub{font-size:11px;color:#8494a4;margin:2px 14px 0}
-.gauge{width:100%;max-width:355px;display:block;margin:3px auto -10px}.gauge-line{stroke:#31475f;stroke-width:2.5;stroke-linecap:round}.gauge-tick{font-size:10px;font-weight:650;fill:#8d9bad}.gauge-center{fill:#293d54}.gauge-readout{text-align:center;margin:0 0 10px;font-size:28px;line-height:1;font-weight:810;letter-spacing:-.05em;color:#1e344d;font-variant-numeric:tabular-nums}.gauge-readout small{font-size:13px;color:#7c8fa1;font-weight:550}
-.gauge-legend{display:flex;justify-content:space-around;gap:3px;font-size:10px;font-weight:680;color:#687d92;margin:0 12px 17px;text-align:center}.gauge-legend b{display:inline-block;width:7px;height:7px;border-radius:2px;margin-right:4px}
-.thermo-container{height:206px;display:flex;align-items:center;justify-content:center;margin:2px auto 0;gap:12px}.thermo-svg{height:201px;width:92px}.thermo-scale{height:163px;display:flex;flex-direction:column;justify-content:space-between;color:#8b9cad;font-size:11px;font-weight:640}.thermo-val{font-weight:750;color:#df665d;text-align:center;font-size:20px;letter-spacing:-.035em;margin:-4px 0 12px;font-variant-numeric:tabular-nums}
-.mini-cap{display:flex;align-items:center;justify-content:space-between;border-top:1px solid #edf1f5;background:#fcfdff;padding:12px 22px;gap:12px;color:#718399;font-size:11px}.mini-cap strong{color:#344b61;font-weight:700}.mini-cap span{overflow-wrap:anywhere}
-.charts-section{margin:0 20px 18px;padding-top:16px;border-top:1px solid #e7edf5}.charts-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}.charts-title strong{color:#233c56;font-size:13px}.charts-title span{font-size:11px;color:#8295a5}
-.charts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
-.chart-card{min-width:0;border:1px solid #e7edf4;border-radius:12px;padding:12px 9px 8px;background:#fff}.chart-header{display:flex;justify-content:space-between;align-items:center;padding:0 5px 4px;gap:5px}.chart-header span:first-child{font-size:11px;font-weight:720;color:#51667d}.chart-header span:last-child{font-size:10px;color:#9aaabc}
-.chart-wrap{position:relative;height:154px}.chart-wrap canvas{width:100%;height:100%;display:block}
-.chart-tooltip{pointer-events:none;position:absolute;background:#102b48;color:white;font-size:11px;border-radius:7px;padding:7px 9px;white-space:nowrap;box-shadow:0 4px 13px #16324c25;transform:translate(-50%,-115%);display:none;z-index:3}
-.history{border-top:1px solid #e9eff5;padding:17px 20px 11px}.history-title{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px}.history-title strong{font-size:13px;color:#29425a}.history-title span{font-size:11px;color:#8c9bab}
-.table-scroll{max-height:248px;overflow:auto;border:1px solid #e7edf4;border-radius:10px}table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;min-width:445px}th,td{padding:10px 11px;border-bottom:1px solid #edf1f5;text-align:left;font-size:11px;white-space:nowrap}th{position:sticky;top:0;color:#788ba0;background:#f8fafc;font-weight:740;z-index:1}td{color:#536a80}tr:last-child td{border-bottom:none}.empty{color:#98a5b3;text-align:center;padding:22px}
-.footer{margin-top:18px;font-size:12px;line-height:1.75;color:#7b8b9e;max-width:1020px}.footer b{color:#465b71}
-@media(max-width:1110px){.stations{grid-template-columns:1fr}.station{max-width:860px;margin:auto;width:100%}.viz-row{grid-template-columns:1.2fr .8fr}}
-@media(max-width:620px){.top-inner{padding:22px 19px 27px}main{padding:22px 12px 30px}.header-stat{gap:16px}.station-head{padding:17px 14px}.station-head h3{font-size:17px}.metrics{padding:12px;gap:8px}.metric{padding:12px 10px}.metric-num{font-size:24px}.viz-row{padding:0 12px 13px;gap:9px}.viz-title{margin:12px 8px 0}.viz-sub{margin:3px 8px 0;font-size:10px}.gauge-legend{font-size:9px}.charts-section{margin:0 12px 16px}.charts{grid-template-columns:1fr}.chart-wrap{height:160px}.history{padding:13px 12px}.thermo-container{gap:1px}.thermo-svg{height:180px;width:72px}.thermo-scale{font-size:10px;height:145px}.periods span{display:none}}
-@media(max-width:385px){.viz-row{grid-template-columns:1fr}.thermo-container{height:160px}.thermo-svg{height:150px}.thermo-scale{height:117px}.gauge{max-width:275px}.station-info{gap:7px}.status{padding:6px;font-size:10px}}
-
-.diagnostics{border:1px solid #d3e0ec;border-radius:13px;background:#fff;padding:15px 18px;margin-bottom:18px;box-shadow:0 6px 22px #1d385708}
-.diagnostics h2{margin:0 0 8px;font-size:15px;color:#1d3550}
-.diagnostics p{margin:4px 0;font-size:12px;line-height:1.55;color:#50667d;overflow-wrap:anywhere}
-.diag-items{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:9px}
-.diag-item{border:1px solid #e4edf5;background:#f8fafd;border-radius:9px;padding:10px 12px}
-.diag-item strong{font-size:12px;color:#19354d}
-.diag-item div{white-space:pre-line;font-size:12px;line-height:1.6;color:#536b80;margin-top:4px}
-.diag-warn{color:#a45b12!important}.diag-error{color:#b34245!important}.diag-ok{color:#1c805f!important}
-@media(max-width:760px){.diag-items{grid-template-columns:1fr}}
-.csv-btn{border:1px solid #c7d9e8;border-radius:8px;padding:7px 11px;background:#edf6fe;color:#17608d;cursor:pointer;font-size:11px;font-weight:720}.csv-btn:hover{background:#dfedfb}
-@media(max-width:570px){main{padding:18px 12px 35px}.top-inner{padding:22px 14px 26px}.stations{grid-template-columns:1fr}.charts{grid-template-columns:1fr}.viz-row{grid-template-columns:1fr 1fr}.metrics{padding:13px}.viz-row{padding:0 13px 16px}.charts-section{margin:0 13px 13px}.history{padding:15px 13px}.station-head{padding:17px 14px}.history-title{align-items:center}}
+:root{font-family:Arial,sans-serif;color:#e8f3fc;background:#081626}
+*{box-sizing:border-box}body{margin:0}header{padding:28px max(18px,4vw);background:#122a45}
+h1{font-size:clamp(24px,3vw,36px);margin:0 0 8px}p{color:#a9bed1;margin:0}
+main{padding:26px max(12px,3vw)}#estado{padding:12px;margin-bottom:20px;border:1px solid #375271;border-radius:12px;background:#12243a;color:#b5dff1}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.station{background:#13263e;border:1px solid #304660;border-radius:20px;padding:19px;min-width:0}
+.st-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+h2{font-size:21px;margin:0}.status{font-size:12px;color:#8ee3b5}small{color:#93aabd}
+.metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:17px 0}
+.metric{padding:15px;border:1px solid #35506b;background:#1a314d;border-radius:12px}
+.metric .name{font-size:12px;color:#9cb5cc}.metric .val{font-size:clamp(22px,2.4vw,31px);font-weight:700;margin-top:7px}
+.metric .unit{font-size:12px;color:#aabbd0}
+.indicators{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.indicator{padding:10px;background:#102238;border:1px solid #304660;border-radius:12px;text-align:center}
+.indicator h3{font-size:13px;color:#bdd0e2}.gauge{width:100%;max-width:240px}
+.thermo{height:140px;width:34px;margin:15px auto;border-radius:20px;border:4px solid #8ca7c0;background:#263951;position:relative;overflow:hidden}
+.thermo .fill{position:absolute;bottom:0;width:100%;height:0%;background:linear-gradient(#ffa578,#f0595b);transition:height .6s}
+.charts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px}
+.chart{background:#0d2035;border:1px solid #2c4762;border-radius:12px;padding:12px;min-width:0}
+.chart h3{font-size:13px;margin:0 0 10px;color:#b5cbe0}
+.chart svg{display:block;width:100%;height:125px;overflow:visible}.chart text{fill:#8daac4;font-size:9px}
+.last{margin:15px 0;color:#98bdd0;font-size:12px}.table-wrap{overflow:auto;max-height:230px}
+table{width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap}th,td{padding:9px;border-bottom:1px solid #314b65;text-align:left}th{color:#9bb9d1}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}@media(max-width:450px){.charts{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<header class="topbar"><div class="top-inner">
- <div class="brandrow"><div class="brand"><span class="brand-icon" aria-hidden="true">◈</span> ESP CASA <span style="color:#728ca7">/</span> BME680</div><div class="top-note" role="status" aria-live="polite"><i id="cloud-dot" class="live-pulse"></i><span id="firebase-status">Preparando conexión a Firebase</span></div></div>
- <div class="header-bottom"><div><div class="eyebrow">MONITOREO AMBIENTAL · FIREBASE REALTIME DATABASE</div><h1>Estaciones ambientales</h1><p>Lecturas individuales de dos ESP32-C5 con sensores BME680 · Wi-Fi de 5 GHz</p></div><div class="header-stat"><div><span id="online-count" class="value">0 / 2</span><span class="caption">estaciones con datos recientes</span></div><div><span class="value">30 s</span><span class="caption">intervalo de medición</span></div></div></div>
-</div></header>
-<main>
- <div id="demo-banner" class="demo-banner" role="status">VISTA DE DEMOSTRACIÓN: los valores son simulados para visualizar los gráficos. No proceden de sensores ni de Firebase. Abre esta página sin <code>?demo=1</code> para consultar las mediciones reales.</div>
+<header><h1>ESP32V2 · Monitor BME680</h1><p>Dos estaciones ESP32-C5 · Mediciones e historial desde Firebase Realtime Database</p></header>
+<main><div id="estado">Conectando con Firebase...</div><section class="grid" id="estaciones"></section></main>
+<script type="module">
+import {initializeApp} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js';
+import {getAuth,signInAnonymously} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
+import {getDatabase,ref,onValue,query,orderByChild,limitToLast} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js';
 
- <section class="diagnostics" aria-label="Estado de lectura Firebase">
-   <h2>Estado de Firebase y recepción de datos</h2>
-   <p id="diag-global">Iniciando Firebase. Este panel identifica por qué puede faltar una medición.</p>
-   <div class="diag-items">
-     <div class="diag-item"><strong>ESP32-C5 01</strong><div id="diag-esp32c5_01">Esperando autenticación...</div></div>
-     <div class="diag-item"><strong>ESP32-C5 02</strong><div id="diag-esp32c5_02">Esperando autenticación...</div></div>
-   </div>
- </section>
- <div class="control-row"><div class="section-intro"><div><h2>Lecturas por dispositivo</h2><p>Termómetros, indicadores semicirculares, barras históricas y fechas guardadas en Firebase</p></div></div><div class="periods" role="group" aria-label="Número de muestras a visualizar"><span>Gráficos</span><button class="active" data-count="12" aria-pressed="true">12 lecturas</button><button data-count="24" aria-pressed="false">24</button><button data-count="48" aria-pressed="false">48</button></div></div>
- <section class="stations" id="stations" aria-label="Estaciones de medición"></section>
- <p class="footer"><b>Nota de medición:</b> el BME680 registra temperatura (°C), humedad relativa (%), presión (hPa) y resistencia de gas (kΩ). La resistencia de gas no es una lectura directa de CO₂ ni determina por sí sola la calidad del aire. Los colores del medidor semicircular representan intervalos de humedad, no un diagnóstico ambiental. Cada lectura se agrega al historial con fecha y hora del servidor Firebase. El panel carga los últimos 240 registros por placa y grafica entre 12 y 48 lecturas; los registros más antiguos permanecen en Firebase. Los dispositivos se marcan como recientes cuando la última muestra tiene menos de 90 segundos.</p>
-</main>
-<script>
-const DEVICES=[{id:'esp32c5_01',label:'ESP32-C5 01',index:'01'},{id:'esp32c5_02',label:'ESP32-C5 02',index:'02'}];
-const METRICS=[{key:'temperatura',name:'Temperatura',unit:'°C',color:'#e6766d'},{key:'humedad',name:'Humedad relativa',unit:'%',color:'#23a8a4'},{key:'presion_hpa',name:'Presión atmosférica',unit:'hPa',color:'#8d76cf'},{key:'gas_kohm',name:'Resistencia del gas',unit:'kΩ',color:'#e89a58'}];
-const state={count:12,actual:{},history:{},authError:false,diagnostics:{}};
-const demoMode=new URLSearchParams(location.search).get('demo')==='1';
-const el=id=>document.getElementById(id);
-const number=(n,decimal=1)=>typeof n==='number'&&Number.isFinite(n)?new Intl.NumberFormat('es-CO',{minimumFractionDigits:decimal,maximumFractionDigits:decimal}).format(n):'—';
-const humanDate=ts=>typeof ts==='number'&&ts>0?new Date(ts).toLocaleString('es-CO',{timeZone:'America/Bogota',year:'numeric',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}):'—';
-const safe=(s)=>String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function stationMarkup(d){return `<article class="station" id="${d.id}">
- <header class="station-head"><div class="station-info"><div class="station-index">${d.index}</div><div><div class="station-type">ESTACIÓN INDEPENDIENTE</div><h3>${d.label}</h3><div class="station-code">${d.id} · BME680</div></div></div><div class="status" data-role="status">Esperando datos</div></header>
- <div class="metrics">${METRICS.map(m=>`<div class="metric"><div class="metric-label">${m.name}</div><div class="metric-num" data-value="${m.key}">— <span class="metric-unit">${m.unit}</span></div></div>`).join('')}</div>
- <div class="viz-row"><div class="vizpanel"><div class="viz-title">Medidor semicircular</div><div class="viz-sub">Humedad relativa · escala 0–100 %</div><svg class="gauge" viewBox="0 0 340 204" aria-label="Medidor de humedad"><g data-role="gauge-parts"></g><line x1="170" y1="176" x2="46" y2="176" class="gauge-line" data-role="needle"/><circle cx="170" cy="176" r="7" class="gauge-center"/><circle cx="170" cy="176" r="3" fill="#fff"/></svg><div class="gauge-readout"><span data-role="gauge-number">—</span><small> % HR</small></div><div class="gauge-legend"><span><b style="background:#f2a095"></b>Baja: 0–30</span><span><b style="background:#f4cb77"></b>Media: 30–60</span><span><b style="background:#84d2a5"></b>Alta: 60–100</span></div></div>
- <div class="vizpanel"><div class="viz-title">Termómetro</div><div class="viz-sub">Temperatura real del sensor</div><div class="thermo-container"><svg class="thermo-svg" viewBox="0 0 105 232" aria-label="Termómetro de temperatura"><defs><linearGradient id="thermograd-${d.index}" x1="0" x2="0" y1="1" y2="0"><stop offset="0%" stop-color="#e64d4c"/><stop offset="100%" stop-color="#ff9a74"/></linearGradient></defs><rect x="31" y="12" width="44" height="184" rx="22" fill="#eaf0f5" stroke="#d8e2ec" stroke-width="2"/><rect x="41" y="21" width="24" height="169" rx="12" fill="#fff"/><rect data-role="thermo-liquid" x="41" y="190" width="24" height="0" rx="9" fill="url(#thermograd-${d.index})"/><circle cx="53" cy="189" r="31" fill="#eaf0f5" stroke="#d8e2ec" stroke-width="2"/><circle cx="53" cy="189" r="23" fill="#e64d4c"/>${[0,1,2,3,4,5,6,7,8].map(i=>`<line x1="66" y1="${35+i*16.6}" x2="76" y2="${35+i*16.6}" stroke="#b5c1cf" stroke-width="1.6"/>`).join('')}</svg><div class="thermo-scale"><span>60 °C</span><span>25 °C</span><span>−10 °C</span></div></div><div class="thermo-val"><span data-role="thermo-number">—</span> <small>°C</small></div></div></div>
- <div class="mini-cap"><div><span>Wi-Fi: <strong data-role="rssi">—</strong> · Canal <strong data-role="channel">—</strong></span></div><div>Última (Bogotá): <strong data-role="last">—</strong></div></div>
- <section class="charts-section"><div class="charts-title"><strong>Evolución de las mediciones</strong><span>Historial permanente en Firebase</span></div><div class="charts">${METRICS.map(m=>`<div class="chart-card"><div class="chart-header"><span>${m.name}</span><span>${m.unit}</span></div><div class="chart-wrap"><canvas data-chart="${m.key}" role="img" aria-label="Historial de ${m.name.toLowerCase()} para ${d.label}"></canvas><div class="chart-tooltip"></div></div></div>`).join('')}</div></section>
- <section class="history"><div class="history-title"><strong>Historial por fecha y hora</strong><button class="csv-btn" type="button" data-export="${d.id}">Exportar CSV</button></div><div class="table-scroll"><table><thead><tr><th>Fecha / hora</th><th>Temp.</th><th>Humedad</th><th>Presión</th><th>Gas</th></tr></thead><tbody data-role="history"><tr><td class="empty" colspan="5">Esperando registros</td></tr></tbody></table></div></section>
- </article>`}
- el('stations').innerHTML=DEVICES.map(stationMarkup).join('');
-function point(t,r=130){const a=Math.PI*(1-t);return{x:170+r*Math.cos(a),y:176-r*Math.sin(a)}}
-function arc(a,b,r=128){const p=point(a,r),q=point(b,r);return `M${p.x.toFixed(2)} ${p.y.toFixed(2)} A${r} ${r} 0 0 1 ${q.x.toFixed(2)} ${q.y.toFixed(2)}`}
-function initializeGauges(){for(const d of DEVICES){const g=el(d.id).querySelector('[data-role="gauge-parts"]');let markup=`<path d="${arc(0,1)}" fill="none" stroke="#edf2f5" stroke-width="29"/>`;for(const[a,b,c]of [[0,.3,'#f2a095'],[.3,.6,'#f4cb77'],[.6,1,'#84d2a5']])markup+=`<path d="${arc(a+.004,b-.004)}" fill="none" stroke="${c}" stroke-width="28"/>`;for(let k=0;k<=100;k+=20){const v=point(k/100,160);markup+=`<text x="${v.x}" y="${v.y+4}" text-anchor="middle" class="gauge-tick">${k}</text>`}g.innerHTML=markup;}}
-initializeGauges();
-function updateStatus(){let online=0;for(const d of DEVICES){const a=state.actual[d.id];const b=el(d.id).querySelector('[data-role="status"]');let text='Esperando datos',cls='';if(a){const diff=Date.now()-Number(a.fecha||0);if(Number.isFinite(diff)&&diff>=-120000&&diff<=90000){text='En línea';cls='good';online++;}else{text='Sin datos recientes';cls='warn'}}if(state.authError&&!a){text='Sin permiso de lectura';cls='error'}if(demoMode){text='Datos simulados';cls='warn'}b.className='status '+cls;b.textContent=text;}el('online-count').textContent=demoMode?'DEMO':`${online} / 2`;}
-function updateActual(id,data){state.actual[id]=data;const root=el(id);for(const m of METRICS){const cell=root.querySelector(`[data-value="${m.key}"]`);cell.innerHTML=`${number(data?.[m.key],m.key==='presion_hpa'?1:1)} <span class="metric-unit">${m.unit}</span>`;}root.querySelector('[data-role="rssi"]').textContent=typeof data?.rssi_dbm==='number'?data.rssi_dbm+' dBm':'—';root.querySelector('[data-role="channel"]').textContent=data?.wifi_canal??'—';root.querySelector('[data-role="last"]').textContent=humanDate(data?.fecha);const hum=data?.humedad==null?NaN:Number(data.humedad),temp=data?.temperatura==null?NaN:Number(data.temperatura);const needle=root.querySelector('[data-role="needle"]');const p=point(Number.isFinite(hum)?Math.min(1,Math.max(0,hum/100)):0,113);needle.setAttribute('x2',String(p.x));needle.setAttribute('y2',String(p.y));needle.style.opacity=Number.isFinite(hum)?'1':'.18';root.querySelector('[data-role="gauge-number"]').textContent=number(Number.isFinite(hum)?hum:null);const liquid=root.querySelector('[data-role="thermo-liquid"]');const scaled=Number.isFinite(temp)?Math.min(1,Math.max(0,(temp+10)/70)):0;const height=scaled*169;liquid.setAttribute('y',String(190-height));liquid.setAttribute('height',String(height));liquid.style.opacity=Number.isFinite(temp)?'1':'.15';root.querySelector('[data-role="thermo-number"]').textContent=number(Number.isFinite(temp)?temp:null);updateStatus();}
-function updateHistory(id,record){const values=record&&typeof record==='object'?Object.values(record):[];state.history[id]=values.filter(d=>d&&typeof d==='object').sort((a,b)=>Number(a.fecha||0)-Number(b.fecha||0));const tbody=el(id).querySelector('[data-role="history"]');const recent=state.history[id].slice(-8).reverse();tbody.innerHTML=recent.length?recent.map(d=>`<tr><td>${safe(humanDate(d.fecha))}</td><td>${number(d.temperatura)}</td><td>${number(d.humedad)}</td><td>${number(d.presion_hpa)}</td><td>${number(d.gas_kohm)}</td></tr>`).join(''):'<tr><td class="empty" colspan="5">Esperando registros</td></tr>';drawAllCharts(id);}
-function niceStep(v){const raw=v/4;if(!raw||!Number.isFinite(raw))return 1;const power=Math.pow(10,Math.floor(Math.log10(raw)));return ([1,2,2.5,5,10].find(x=>x*power>=raw)||10)*power}
-function drawBarChart(canvas,list,metric){const parent=canvas.parentElement;const width=parent.clientWidth||240,height=parent.clientHeight||154;const dpr=Math.min(2,window.devicePixelRatio||1);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);ctx.clearRect(0,0,width,height);const L=36,R=9,T=20,B=27,chartWidth=width-L-R,chartHeight=height-T-B;const points=list.map(d=>({v:Number(d[metric.key]),ts:Number(d.fecha)})).filter(p=>Number.isFinite(p.v));
-if(!points.length){ctx.fillStyle='#9aaabc';ctx.font='12px system-ui';ctx.textAlign='center';ctx.fillText('Esperando mediciones',width/2,height/2);canvas._bars=[];return;}
-const vals=points.map(p=>p.v);let min=Math.min(...vals),max=Math.max(...vals);let padding=(max-min)*.22 || (Math.abs(max)*.055 || 1);min-=padding;max+=padding;if(metric.key==='humedad'){min=Math.max(0,min);max=Math.min(100,max)}if(metric.key==='gas_kohm'){min=Math.max(0,min)}if(max-min<.01)max=min+1;
-for(let i=0;i<4;i++){let y=T+chartHeight*i/3;ctx.strokeStyle='#edf2f7';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(L,y);ctx.lineTo(width-R,y);ctx.stroke();const n=max-(max-min)*i/3;ctx.fillStyle='#9aaabc';ctx.font='10px system-ui';ctx.textAlign='right';ctx.fillText(number(n,metric.key==='presion_hpa'?0:1),L-6,y+3)}
-const slot=chartWidth/points.length,barWidth=Math.max(3,Math.min(16,slot*.62)),bars=[];const grad=ctx.createLinearGradient(0,T,0,T+chartHeight);grad.addColorStop(0,metric.color);grad.addColorStop(1,metric.color+'9e');ctx.fillStyle=grad;
-for(let i=0;i<points.length;i++){const p=points[i],h=Math.max(2,chartHeight*(p.v-min)/(max-min)),x=L+i*slot+(slot-barWidth)/2,y=T+chartHeight-h;ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x,y,barWidth,h,[3,3,0,0]);else ctx.rect(x,y,barWidth,h);ctx.fill();bars.push({x,x2:x+barWidth,y,value:p.v,ts:p.ts})}canvas._bars=bars;ctx.font='10px system-ui';ctx.fillStyle='#91a1b2';ctx.textAlign='left';ctx.fillText(points[0].ts?new Date(points[0].ts).toLocaleTimeString('es-CO',{timeZone:'America/Bogota',hour:'2-digit',minute:'2-digit'}):'inicio',L,height-7);ctx.textAlign='right';ctx.fillText(points.at(-1).ts?new Date(points.at(-1).ts).toLocaleTimeString('es-CO',{timeZone:'America/Bogota',hour:'2-digit',minute:'2-digit'}):'ahora',width-R,height-7)}
-function drawAllCharts(id){const latest=(state.history[id]||[]).slice(-state.count);const root=el(id);for(const m of METRICS){const canvas=root.querySelector(`[data-chart="${m.key}"]`);drawBarChart(canvas,latest,m)}}
-for(const d of DEVICES){const root=el(d.id);for(const metric of METRICS){const canvas=root.querySelector(`[data-chart="${metric.key}"]`),tip=canvas.parentElement.querySelector('.chart-tooltip');canvas.addEventListener('mousemove',ev=>{const bars=canvas._bars||[];if(!bars.length){tip.style.display='none';return}const rect=canvas.getBoundingClientRect(),x=(ev.clientX-rect.left),target=bars.reduce((a,b)=>Math.abs((a.x+a.x2)/2-x)<Math.abs((b.x+b.x2)/2-x)?a:b);if(!target){tip.style.display='none';return}tip.textContent=`${number(target.value)} ${metric.unit} · ${target.ts?new Date(target.ts).toLocaleString('es-CO',{timeZone:'America/Bogota',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'—'}`;tip.style.left=Math.max(55,Math.min(rect.width-55,(target.x+target.x2)/2))+'px';tip.style.top=Math.max(34,target.y)+'px';tip.style.display='block'});canvas.addEventListener('mouseleave',()=>{tip.style.display='none'})}}
-for(const b of document.querySelectorAll('[data-count]'))b.addEventListener('click',()=>{state.count=Number(b.dataset.count);for(const node of document.querySelectorAll('[data-count]')){const chosen=node===b;node.classList.toggle('active',chosen);node.setAttribute('aria-pressed',String(chosen))}for(const d of DEVICES)drawAllCharts(d.id)});
-new ResizeObserver(()=>{for(const d of DEVICES)drawAllCharts(d.id)}).observe(el('stations'));
-setInterval(updateStatus,15000);
-function diag(id,type,message){
-  if(!state.diagnostics[id])state.diagnostics[id]={};
-  state.diagnostics[id][type]=message;
-  const view=el('diag-'+id);
-  if(view)view.textContent=Object.values(state.diagnostics[id]).join('\n');
+// Web API key del proyecto ESP32V2, NO la del proyecto anterior.
+const firebaseConfig = {
+  apiKey: 'AIzaSyAH_nt9yfY9NULWqdU365XN3lOfVjVOIMg',
+  authDomain: 'esp32v2-3270a.firebaseapp.com',
+  databaseURL: 'https://esp32v2-3270a-default-rtdb.firebaseio.com',
+  projectId: 'esp32v2-3270a'
+};
+const devices=['esp32c5_01','esp32c5_02'];
+const metrics=[
+  ['temperatura','Temperatura','°C','#f29a7a'],
+  ['humedad','Humedad','%','#6ae3ca'],
+  ['presion_hpa','Presión','hPa','#b1a1ff'],
+  ['gas_kohm','Resistencia de gas','kΩ','#ffcc75']
+];
+const latest={};
+const histories={};
+const fmt=(n,d=1)=>Number.isFinite(Number(n))&&n!=null?Number(n).toFixed(d):'—';
+const fecha=ts=>ts?new Date(ts).toLocaleString('es-CO',{timeZone:'America/Bogota'}):'Sin fecha';
+function create(){
+ document.getElementById('estaciones').innerHTML=devices.map((id,i)=>`
+ <article class="station" id="${id}">
+  <div class="st-head"><h2>ESP32-C5 ${i+1} · BME680</h2><span class="status" data="status">Sin datos</span></div>
+  <small>${id}</small>
+  <div class="metrics">${metrics.map(([key,name,unit])=>`<div class="metric"><div class="name">${name}</div><div class="val" data="${key}">—</div><span class="unit">${unit}</span></div>`).join('')}</div>
+  <div class="indicators">
+    <div class="indicator"><h3>Humedad relativa</h3><svg class="gauge" viewBox="0 0 220 135"><path d="M25 110 A85 85 0 0 1 195 110" stroke="#2f4d69" stroke-width="20" fill="none"/><path d="M25 110 A85 85 0 0 1 195 110" stroke="#60d7c4" stroke-width="16" fill="none"/><line data="aguja" x1="110" y1="110" x2="25" y2="110" stroke="#fff" stroke-width="4" stroke-linecap="round"/><circle cx="110" cy="110" r="7" fill="#fff"/><text x="110" y="130" text-anchor="middle" data="gaugeText">—</text></svg></div>
+    <div class="indicator"><h3>Termómetro</h3><div class="thermo"><div class="fill" data="thermo"></div></div><small data="termotext">— °C</small></div>
+  </div>
+  <div class="last" data="fecha">Última medición: —</div>
+  <div class="charts">${metrics.map(([key,name])=>`<div class="chart"><h3>${name}</h3><svg data-chart="${key}" viewBox="0 0 320 125" preserveAspectRatio="none"></svg></div>`).join('')}</div>
+  <h3>Historial por fecha (últimos 12 registros)</h3><div class="table-wrap"><table><thead><tr><th>Fecha Bogotá</th><th>°C</th><th>%</th><th>hPa</th><th>kΩ</th></tr></thead><tbody data="tabla"></tbody></table></div>
+ </article>`).join('');
 }
-function globalDiag(message,style=''){
-  const view=el('diag-global');
-  view.textContent=message;
-  view.className=style;
+create();
+function plot(svg,arr,key,color){
+ const valid=arr.map(a=>Number(a[key])).filter(Number.isFinite);
+ if(!valid.length){svg.textContent='';return;}
+ let lo=Math.min(...valid),hi=Math.max(...valid),spread=hi-lo||1;
+ const w=320,h=110,bw=w/valid.length*.68,step=w/valid.length;
+ svg.innerHTML=valid.map((v,i)=>{
+   let bar=8+(v-lo)/spread*85;
+   return `<rect x="${(i*step+step*.15).toFixed(1)}" y="${(h-bar).toFixed(1)}" width="${bw.toFixed(1)}" height="${bar.toFixed(1)}" rx="3" fill="${color}"><title>${fmt(v,2)}</title></rect>`;
+ }).join('')+`<text x="2" y="122">${fmt(lo,1)} – ${fmt(hi,1)}</text>`;
 }
-function firebaseStatus(label,status){el('firebase-status').textContent=label;el('cloud-dot').className='live-pulse '+(status||'')}
-
-function exportarCSV(id){
-  const filas=state.history[id]||[];
-  if(!filas.length){ alert('Aún no se recibieron registros para '+id); return; }
-  const cabeceras=['fecha_bogota','fecha_unix_ms','temperatura_c','humedad_pct','presion_hpa','gas_kohm','wifi_rssi_dbm','wifi_canal'];
-  const fechaISO = ts => typeof ts==='number' ? new Date(ts).toLocaleString('sv-SE',{timeZone:'America/Bogota',hour12:false}).replace(' ','T') : '';
-  const cuerpo=filas.map(r=>[fechaISO(r.fecha),r.fecha,r.temperatura,r.humedad,r.presion_hpa,r.gas_kohm,r.rssi_dbm,r.wifi_canal].map(v=>v ?? '').join(',')).join('\r\n');
-  const csv='\uFEFF'+cabeceras.join(',')+'\r\n'+cuerpo+'\r\n';
-  const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
-  const a=document.createElement('a');a.href=url;a.download=id+'_ultimos_'+filas.length+'.csv';
-  document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+function render(id){
+ const box=document.getElementById(id),d=latest[id]||{},hist=histories[id]||[];
+ for(const [key] of metrics)box.querySelector(`[data="${key}"]`).textContent=fmt(d[key],2);
+ box.querySelector('[data="fecha"]').textContent='Última medición: '+fecha(d.fecha)+` · Wi-Fi ${d.rssi_dbm??'—'} dBm`;
+ const age=Date.now()-Number(d.fecha||0);
+ box.querySelector('[data="status"]').textContent=d.fecha?(age<90000?'Actualizado':'Sin datos recientes'):'Sin datos';
+ if(d.humedad!=null){const angle=Math.PI*(1-Math.max(0,Math.min(100,d.humedad))/100);
+ box.querySelector('[data="aguja"]').setAttribute('x2',110+75*Math.cos(angle));
+ box.querySelector('[data="aguja"]').setAttribute('y2',110-75*Math.sin(angle));
+ box.querySelector('[data="gaugeText"]').textContent=fmt(d.humedad)+' %';}
+ if(d.temperatura!=null){box.querySelector('[data="thermo"]').style.height=Math.max(0,Math.min(100,(d.temperatura+10)/70*100))+'%';
+ box.querySelector('[data="termotext"]').textContent=fmt(d.temperatura)+' °C';}
+ for(const [key,, ,color] of metrics)plot(box.querySelector(`[data-chart="${key}"]`),hist.slice(-24),key,color);
+ box.querySelector('[data="tabla"]').innerHTML=hist.slice(-12).reverse().map(v=>`<tr><td>${fecha(v.fecha)}</td><td>${fmt(v.temperatura)}</td><td>${fmt(v.humedad)}</td><td>${fmt(v.presion_hpa)}</td><td>${fmt(v.gas_kohm)}</td></tr>`).join('')||'<tr><td colspan="5">Sin registros</td></tr>';
 }
-for(const b of document.querySelectorAll('[data-export]'))
-  b.addEventListener('click',()=>exportarCSV(b.dataset.export));
-if(demoMode){
-  el('demo-banner').classList.add('show');
-  firebaseStatus('Vista de demostración','');
-  globalDiag('Datos simulados: no existe conexión con Firebase en esta vista. Quita ?demo=1 de la dirección para ver lecturas reales.');
-  for(const d of DEVICES){
-    const now=Date.now();
-    const arr=Array.from({length:48},(_,i)=>({fecha:now-(47-i)*30000,temperatura:(d.index==='01'?23.5:25.1)+Math.sin(i/5)*1.3+Math.sin(i*.9)*.16,humedad:(d.index==='01'?54:62)+Math.cos(i/6)*7,presion_hpa:(d.index==='01'?1004:1001)+Math.sin(i/9)*2,gas_kohm:(d.index==='01'?31:42)+Math.cos(i/4)*7,rssi_dbm:-48,wifi_canal:44}));
-    updateActual(d.id,arr.at(-1));updateHistory(d.id,arr);
-    diag(d.id,'demo','Demostración con 48 lecturas simuladas.');
-  }
-}else{
-  if(location.protocol==='file:')globalDiag('Abre el HTML mediante http://localhost:8000, no haciendo doble clic en el archivo. Los módulos y la autenticación web pueden fallar con file://.','diag-warn');
-  (async()=>{
-    try{
-      globalDiag('Cargando Firebase SDK y autenticando al panel...');
-      const {initializeApp}=await import('https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js');
-      const {getAuth,signInAnonymously}=await import('https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js');
-      const {getDatabase,onValue,ref,query,orderByChild,limitToLast}=await import('https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js');
-      const firebaseConfig={apiKey:'AIzaSyDgjGCk448HpIYZ2Jis73jsRKHNbo5e_ZA',authDomain:'espcasa-c509a.firebaseapp.com',databaseURL:'https://espcasa-c509a-default-rtdb.firebaseio.com',projectId:'espcasa-c509a',storageBucket:'espcasa-c509a.firebasestorage.app',messagingSenderId:'1079515585625',appId:'1:1079515585625:web:0ad2bd7bbe3272ec79e548',measurementId:'G-5FH6JN41VE'};
-      const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getDatabase(app);
-      await signInAnonymously(auth);
-      firebaseStatus('Firebase: autenticación correcta','ok');
-      globalDiag('Autenticación anónima correcta. Leyendo sensores/esp32c5_01 y sensores/esp32c5_02. Los datos de sensores/sht31 se conservan por separado.','diag-ok');
-      for(const d of DEVICES){
-        diag(d.id,'auth','Autenticación correcta.');
-        onValue(ref(db,`sensores/${d.id}/actual`),snapshot=>{
-          const value=snapshot.val();
-          if(value){
-            updateActual(d.id,value);
-            diag(d.id,'actual',`Última lectura recibida: ${humanDate(value.fecha)}.`);
-          }else{
-            diag(d.id,'actual',`Ruta sensores/${d.id}/actual vacía. Busca en el Monitor Serie: [FIREBASE] actual: HTTP 200. Revisa también config/owners.`);
-          }
-        },error=>{
-          state.authError=true;updateStatus();
-          diag(d.id,'actual',`Error de lectura en actual: ${error.code||error.message}. Revisa Authentication y las reglas de Realtime Database.`);
-          firebaseStatus('Lectura Firebase rechazada','error');
-          console.error('Lectura actual',d.id,error);
-        });
-        onValue(query(ref(db,`sensores/${d.id}/historial`),orderByChild('fecha'),limitToLast(240)),snapshot=>{
-          const data=snapshot.val();
-          updateHistory(d.id,data);
-          const records=state.history[d.id];
-          if(records.length){
-            diag(d.id,'history',`${records.length} mediciones recibidas del historial.`);
-            // Si falta "actual", mostrar de todas formas la última lectura histórica.
-            if(!state.actual[d.id])updateActual(d.id,records.at(-1));
-          }else{
-            diag(d.id,'history',`Ruta sensores/${d.id}/historial vacía. Busca en el Monitor Serie: [FIREBASE] historial: HTTP 200.`);
-          }
-        },error=>{
-          state.authError=true;updateStatus();
-          diag(d.id,'history',`Error en historial: ${error.code||error.message}. Revisa el permiso .read y el índice fecha.`);
-          firebaseStatus('Error leyendo historial','error');
-          console.error('Lectura historial',d.id,error);
-        });
-      }
-    }catch(error){
-      state.authError=true;updateStatus();
-      firebaseStatus('Error conectando con Firebase','error');
-      const message=`No se pudo autenticar o cargar Firebase: ${error.code||error.message}. Comprueba que Authentication > Anónimo esté habilitado y que esta página se abra desde http://localhost:8000.`;
-      globalDiag(message,'diag-error');
-      for(const d of DEVICES)diag(d.id,'auth',message);
-      console.error(error);
-    }
-  })();
-}
+const estado=document.getElementById('estado');
+try{
+ if(!firebaseConfig.apiKey)throw Error('Debes colocar la Web API key del proyecto ESP32V2 en firebaseConfig.apiKey');
+ const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getDatabase(app);
+ await signInAnonymously(auth);
+ estado.textContent='Firebase autenticado. Esperando datos de las dos estaciones.';
+ for(const id of devices){
+   onValue(ref(db,`sensores/${id}/actual`),snap=>{latest[id]=snap.val()||{};render(id);},err=>{estado.textContent=`Error leyendo ${id}: ${err.message}`;});
+   onValue(query(ref(db,`sensores/${id}/historial`),orderByChild('fecha'),limitToLast(100)),snap=>{
+     histories[id]=Object.values(snap.val()||{}).sort((a,b)=>Number(a.fecha)-Number(b.fecha));render(id);
+   },err=>{estado.textContent=`Error del historial ${id}: ${err.message}`;});
+ }
+}catch(err){estado.textContent='Error Firebase: '+err.message;}
 </script>
 </body>
 </html>
-
