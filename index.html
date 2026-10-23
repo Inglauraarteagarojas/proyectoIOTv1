@@ -61,6 +61,18 @@ main{max-width:1480px;margin:auto;padding:29px 34px 52px}
 @media(max-width:1110px){.stations{grid-template-columns:1fr}.station{max-width:860px;margin:auto;width:100%}.viz-row{grid-template-columns:1.2fr .8fr}}
 @media(max-width:620px){.top-inner{padding:22px 19px 27px}main{padding:22px 12px 30px}.header-stat{gap:16px}.station-head{padding:17px 14px}.station-head h3{font-size:17px}.metrics{padding:12px;gap:8px}.metric{padding:12px 10px}.metric-num{font-size:24px}.viz-row{padding:0 12px 13px;gap:9px}.viz-title{margin:12px 8px 0}.viz-sub{margin:3px 8px 0;font-size:10px}.gauge-legend{font-size:9px}.charts-section{margin:0 12px 16px}.charts{grid-template-columns:1fr}.chart-wrap{height:160px}.history{padding:13px 12px}.thermo-container{gap:1px}.thermo-svg{height:180px;width:72px}.thermo-scale{font-size:10px;height:145px}.periods span{display:none}}
 @media(max-width:385px){.viz-row{grid-template-columns:1fr}.thermo-container{height:160px}.thermo-svg{height:150px}.thermo-scale{height:117px}.gauge{max-width:275px}.station-info{gap:7px}.status{padding:6px;font-size:10px}}
+
+.diagnostics{border:1px solid #d3e0ec;border-radius:13px;background:#fff;padding:15px 18px;margin-bottom:18px;box-shadow:0 6px 22px #1d385708}
+.diagnostics h2{margin:0 0 8px;font-size:15px;color:#1d3550}
+.diagnostics p{margin:4px 0;font-size:12px;line-height:1.55;color:#50667d;overflow-wrap:anywhere}
+.diag-items{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:9px}
+.diag-item{border:1px solid #e4edf5;background:#f8fafd;border-radius:9px;padding:10px 12px}
+.diag-item strong{font-size:12px;color:#19354d}
+.diag-item div{white-space:pre-line;font-size:12px;line-height:1.6;color:#536b80;margin-top:4px}
+.diag-warn{color:#a45b12!important}.diag-error{color:#b34245!important}.diag-ok{color:#1c805f!important}
+@media(max-width:760px){.diag-items{grid-template-columns:1fr}}
+.csv-btn{border:1px solid #c7d9e8;border-radius:8px;padding:7px 11px;background:#edf6fe;color:#17608d;cursor:pointer;font-size:11px;font-weight:720}.csv-btn:hover{background:#dfedfb}
+@media(max-width:570px){main{padding:18px 12px 35px}.top-inner{padding:22px 14px 26px}.stations{grid-template-columns:1fr}.charts{grid-template-columns:1fr}.viz-row{grid-template-columns:1fr 1fr}.metrics{padding:13px}.viz-row{padding:0 13px 16px}.charts-section{margin:0 13px 13px}.history{padding:15px 13px}.station-head{padding:17px 14px}.history-title{align-items:center}}
 </style>
 </head>
 <body>
@@ -70,14 +82,23 @@ main{max-width:1480px;margin:auto;padding:29px 34px 52px}
 </div></header>
 <main>
  <div id="demo-banner" class="demo-banner" role="status">VISTA DE DEMOSTRACIÓN: los valores son simulados para visualizar los gráficos. No proceden de sensores ni de Firebase. Abre esta página sin <code>?demo=1</code> para consultar las mediciones reales.</div>
+
+ <section class="diagnostics" aria-label="Estado de lectura Firebase">
+   <h2>Estado de Firebase y recepción de datos</h2>
+   <p id="diag-global">Iniciando Firebase. Este panel identifica por qué puede faltar una medición.</p>
+   <div class="diag-items">
+     <div class="diag-item"><strong>ESP32-C5 01</strong><div id="diag-esp32c5_01">Esperando autenticación...</div></div>
+     <div class="diag-item"><strong>ESP32-C5 02</strong><div id="diag-esp32c5_02">Esperando autenticación...</div></div>
+   </div>
+ </section>
  <div class="control-row"><div class="section-intro"><div><h2>Lecturas por dispositivo</h2><p>Termómetros, indicadores semicirculares, barras históricas y fechas guardadas en Firebase</p></div></div><div class="periods" role="group" aria-label="Número de muestras a visualizar"><span>Gráficos</span><button class="active" data-count="12" aria-pressed="true">12 lecturas</button><button data-count="24" aria-pressed="false">24</button><button data-count="48" aria-pressed="false">48</button></div></div>
  <section class="stations" id="stations" aria-label="Estaciones de medición"></section>
- <p class="footer"><b>Nota de medición:</b> el BME680 registra temperatura (°C), humedad relativa (%), presión (hPa) y resistencia de gas (kΩ). La resistencia de gas no es una lectura directa de CO₂ ni determina por sí sola la calidad del aire. Los colores del medidor semicircular representan intervalos de humedad, no un diagnóstico ambiental. Cada lectura se agrega al historial con fecha y hora del servidor Firebase. El panel carga los últimos 240 registros por placa y grafica entre 12 y 48 lecturas. Los dispositivos se marcan como recientes cuando la última muestra tiene menos de 90 segundos.</p>
+ <p class="footer"><b>Nota de medición:</b> el BME680 registra temperatura (°C), humedad relativa (%), presión (hPa) y resistencia de gas (kΩ). La resistencia de gas no es una lectura directa de CO₂ ni determina por sí sola la calidad del aire. Los colores del medidor semicircular representan intervalos de humedad, no un diagnóstico ambiental. Cada lectura se agrega al historial con fecha y hora del servidor Firebase. El panel carga los últimos 240 registros por placa y grafica entre 12 y 48 lecturas; los registros más antiguos permanecen en Firebase. Los dispositivos se marcan como recientes cuando la última muestra tiene menos de 90 segundos.</p>
 </main>
 <script>
 const DEVICES=[{id:'esp32c5_01',label:'ESP32-C5 01',index:'01'},{id:'esp32c5_02',label:'ESP32-C5 02',index:'02'}];
 const METRICS=[{key:'temperatura',name:'Temperatura',unit:'°C',color:'#e6766d'},{key:'humedad',name:'Humedad relativa',unit:'%',color:'#23a8a4'},{key:'presion_hpa',name:'Presión atmosférica',unit:'hPa',color:'#8d76cf'},{key:'gas_kohm',name:'Resistencia del gas',unit:'kΩ',color:'#e89a58'}];
-const state={count:12,actual:{},history:{},authError:false};
+const state={count:12,actual:{},history:{},authError:false,diagnostics:{}};
 const demoMode=new URLSearchParams(location.search).get('demo')==='1';
 const el=id=>document.getElementById(id);
 const number=(n,decimal=1)=>typeof n==='number'&&Number.isFinite(n)?new Intl.NumberFormat('es-CO',{minimumFractionDigits:decimal,maximumFractionDigits:decimal}).format(n):'—';
@@ -90,7 +111,7 @@ function stationMarkup(d){return `<article class="station" id="${d.id}">
  <div class="vizpanel"><div class="viz-title">Termómetro</div><div class="viz-sub">Temperatura real del sensor</div><div class="thermo-container"><svg class="thermo-svg" viewBox="0 0 105 232" aria-label="Termómetro de temperatura"><defs><linearGradient id="thermograd-${d.index}" x1="0" x2="0" y1="1" y2="0"><stop offset="0%" stop-color="#e64d4c"/><stop offset="100%" stop-color="#ff9a74"/></linearGradient></defs><rect x="31" y="12" width="44" height="184" rx="22" fill="#eaf0f5" stroke="#d8e2ec" stroke-width="2"/><rect x="41" y="21" width="24" height="169" rx="12" fill="#fff"/><rect data-role="thermo-liquid" x="41" y="190" width="24" height="0" rx="9" fill="url(#thermograd-${d.index})"/><circle cx="53" cy="189" r="31" fill="#eaf0f5" stroke="#d8e2ec" stroke-width="2"/><circle cx="53" cy="189" r="23" fill="#e64d4c"/>${[0,1,2,3,4,5,6,7,8].map(i=>`<line x1="66" y1="${35+i*16.6}" x2="76" y2="${35+i*16.6}" stroke="#b5c1cf" stroke-width="1.6"/>`).join('')}</svg><div class="thermo-scale"><span>60 °C</span><span>25 °C</span><span>−10 °C</span></div></div><div class="thermo-val"><span data-role="thermo-number">—</span> <small>°C</small></div></div></div>
  <div class="mini-cap"><div><span>Wi-Fi: <strong data-role="rssi">—</strong> · Canal <strong data-role="channel">—</strong></span></div><div>Última (Bogotá): <strong data-role="last">—</strong></div></div>
  <section class="charts-section"><div class="charts-title"><strong>Evolución de las mediciones</strong><span>Historial permanente en Firebase</span></div><div class="charts">${METRICS.map(m=>`<div class="chart-card"><div class="chart-header"><span>${m.name}</span><span>${m.unit}</span></div><div class="chart-wrap"><canvas data-chart="${m.key}" role="img" aria-label="Historial de ${m.name.toLowerCase()} para ${d.label}"></canvas><div class="chart-tooltip"></div></div></div>`).join('')}</div></section>
- <section class="history"><div class="history-title"><strong>Historial por fecha y hora</strong><span>Fecha y hora de Bogotá (UTC−05:00)</span></div><div class="table-scroll"><table><thead><tr><th>Fecha / hora</th><th>Temp.</th><th>Humedad</th><th>Presión</th><th>Gas</th></tr></thead><tbody data-role="history"><tr><td class="empty" colspan="5">Esperando registros</td></tr></tbody></table></div></section>
+ <section class="history"><div class="history-title"><strong>Historial por fecha y hora</strong><button class="csv-btn" type="button" data-export="${d.id}">Exportar CSV</button></div><div class="table-scroll"><table><thead><tr><th>Fecha / hora</th><th>Temp.</th><th>Humedad</th><th>Presión</th><th>Gas</th></tr></thead><tbody data-role="history"><tr><td class="empty" colspan="5">Esperando registros</td></tr></tbody></table></div></section>
  </article>`}
  el('stations').innerHTML=DEVICES.map(stationMarkup).join('');
 function point(t,r=130){const a=Math.PI*(1-t);return{x:170+r*Math.cos(a),y:176-r*Math.sin(a)}}
@@ -98,7 +119,7 @@ function arc(a,b,r=128){const p=point(a,r),q=point(b,r);return `M${p.x.toFixed(2
 function initializeGauges(){for(const d of DEVICES){const g=el(d.id).querySelector('[data-role="gauge-parts"]');let markup=`<path d="${arc(0,1)}" fill="none" stroke="#edf2f5" stroke-width="29"/>`;for(const[a,b,c]of [[0,.3,'#f2a095'],[.3,.6,'#f4cb77'],[.6,1,'#84d2a5']])markup+=`<path d="${arc(a+.004,b-.004)}" fill="none" stroke="${c}" stroke-width="28"/>`;for(let k=0;k<=100;k+=20){const v=point(k/100,160);markup+=`<text x="${v.x}" y="${v.y+4}" text-anchor="middle" class="gauge-tick">${k}</text>`}g.innerHTML=markup;}}
 initializeGauges();
 function updateStatus(){let online=0;for(const d of DEVICES){const a=state.actual[d.id];const b=el(d.id).querySelector('[data-role="status"]');let text='Esperando datos',cls='';if(a){const diff=Date.now()-Number(a.fecha||0);if(Number.isFinite(diff)&&diff>=-120000&&diff<=90000){text='En línea';cls='good';online++;}else{text='Sin datos recientes';cls='warn'}}if(state.authError&&!a){text='Sin permiso de lectura';cls='error'}if(demoMode){text='Datos simulados';cls='warn'}b.className='status '+cls;b.textContent=text;}el('online-count').textContent=demoMode?'DEMO':`${online} / 2`;}
-function updateActual(id,data){state.actual[id]=data;const root=el(id);for(const m of METRICS){const cell=root.querySelector(`[data-value="${m.key}"]`);cell.innerHTML=`${number(data?.[m.key],m.key==='presion_hpa'?1:1)} <span class="metric-unit">${m.unit}</span>`;}root.querySelector('[data-role="rssi"]').textContent=typeof data?.rssi_dbm==='number'?data.rssi_dbm+' dBm':'—';root.querySelector('[data-role="channel"]').textContent=data?.wifi_canal??'—';root.querySelector('[data-role="last"]').textContent=humanDate(data?.fecha);const hum=Number(data?.humedad),temp=Number(data?.temperatura);const needle=root.querySelector('[data-role="needle"]');const p=point(Number.isFinite(hum)?Math.min(1,Math.max(0,hum/100)):0,113);needle.setAttribute('x2',String(p.x));needle.setAttribute('y2',String(p.y));needle.style.opacity=Number.isFinite(hum)?'1':'.18';root.querySelector('[data-role="gauge-number"]').textContent=number(Number.isFinite(hum)?hum:null);const liquid=root.querySelector('[data-role="thermo-liquid"]');const scaled=Number.isFinite(temp)?Math.min(1,Math.max(0,(temp+10)/70)):0;const height=scaled*169;liquid.setAttribute('y',String(190-height));liquid.setAttribute('height',String(height));liquid.style.opacity=Number.isFinite(temp)?'1':'.15';root.querySelector('[data-role="thermo-number"]').textContent=number(Number.isFinite(temp)?temp:null);updateStatus();}
+function updateActual(id,data){state.actual[id]=data;const root=el(id);for(const m of METRICS){const cell=root.querySelector(`[data-value="${m.key}"]`);cell.innerHTML=`${number(data?.[m.key],m.key==='presion_hpa'?1:1)} <span class="metric-unit">${m.unit}</span>`;}root.querySelector('[data-role="rssi"]').textContent=typeof data?.rssi_dbm==='number'?data.rssi_dbm+' dBm':'—';root.querySelector('[data-role="channel"]').textContent=data?.wifi_canal??'—';root.querySelector('[data-role="last"]').textContent=humanDate(data?.fecha);const hum=data?.humedad==null?NaN:Number(data.humedad),temp=data?.temperatura==null?NaN:Number(data.temperatura);const needle=root.querySelector('[data-role="needle"]');const p=point(Number.isFinite(hum)?Math.min(1,Math.max(0,hum/100)):0,113);needle.setAttribute('x2',String(p.x));needle.setAttribute('y2',String(p.y));needle.style.opacity=Number.isFinite(hum)?'1':'.18';root.querySelector('[data-role="gauge-number"]').textContent=number(Number.isFinite(hum)?hum:null);const liquid=root.querySelector('[data-role="thermo-liquid"]');const scaled=Number.isFinite(temp)?Math.min(1,Math.max(0,(temp+10)/70)):0;const height=scaled*169;liquid.setAttribute('y',String(190-height));liquid.setAttribute('height',String(height));liquid.style.opacity=Number.isFinite(temp)?'1':'.15';root.querySelector('[data-role="thermo-number"]').textContent=number(Number.isFinite(temp)?temp:null);updateStatus();}
 function updateHistory(id,record){const values=record&&typeof record==='object'?Object.values(record):[];state.history[id]=values.filter(d=>d&&typeof d==='object').sort((a,b)=>Number(a.fecha||0)-Number(b.fecha||0));const tbody=el(id).querySelector('[data-role="history"]');const recent=state.history[id].slice(-8).reverse();tbody.innerHTML=recent.length?recent.map(d=>`<tr><td>${safe(humanDate(d.fecha))}</td><td>${number(d.temperatura)}</td><td>${number(d.humedad)}</td><td>${number(d.presion_hpa)}</td><td>${number(d.gas_kohm)}</td></tr>`).join(''):'<tr><td class="empty" colspan="5">Esperando registros</td></tr>';drawAllCharts(id);}
 function niceStep(v){const raw=v/4;if(!raw||!Number.isFinite(raw))return 1;const power=Math.pow(10,Math.floor(Math.log10(raw)));return ([1,2,2.5,5,10].find(x=>x*power>=raw)||10)*power}
 function drawBarChart(canvas,list,metric){const parent=canvas.parentElement;const width=parent.clientWidth||240,height=parent.clientHeight||154;const dpr=Math.min(2,window.devicePixelRatio||1);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);ctx.clearRect(0,0,width,height);const L=36,R=9,T=20,B=27,chartWidth=width-L-R,chartHeight=height-T-B;const points=list.map(d=>({v:Number(d[metric.key]),ts:Number(d.fecha)})).filter(p=>Number.isFinite(p.v));
@@ -112,9 +133,100 @@ for(const d of DEVICES){const root=el(d.id);for(const metric of METRICS){const c
 for(const b of document.querySelectorAll('[data-count]'))b.addEventListener('click',()=>{state.count=Number(b.dataset.count);for(const node of document.querySelectorAll('[data-count]')){const chosen=node===b;node.classList.toggle('active',chosen);node.setAttribute('aria-pressed',String(chosen))}for(const d of DEVICES)drawAllCharts(d.id)});
 new ResizeObserver(()=>{for(const d of DEVICES)drawAllCharts(d.id)}).observe(el('stations'));
 setInterval(updateStatus,15000);
+function diag(id,type,message){
+  if(!state.diagnostics[id])state.diagnostics[id]={};
+  state.diagnostics[id][type]=message;
+  const view=el('diag-'+id);
+  if(view)view.textContent=Object.values(state.diagnostics[id]).join('\n');
+}
+function globalDiag(message,style=''){
+  const view=el('diag-global');
+  view.textContent=message;
+  view.className=style;
+}
 function firebaseStatus(label,status){el('firebase-status').textContent=label;el('cloud-dot').className='live-pulse '+(status||'')}
-if(demoMode){el('demo-banner').classList.add('show');firebaseStatus('Vista de demostración','');for(const d of DEVICES){const now=Date.now(),arr=Array.from({length:48},(_,i)=>({fecha:now-(47-i)*30000,temperatura:(d.index==='01'?23.5:25.1)+Math.sin(i/5)*1.3+Math.sin(i*.9)*.16,humedad:(d.index==='01'?54:62)+Math.cos(i/6)*7,presion_hpa:(d.index==='01'?1004:1001)+Math.sin(i/9)*2,gas_kohm:(d.index==='01'?31:42)+Math.cos(i/4)*7,rssi_dbm:-48,wifi_canal:44}));updateActual(d.id,arr.at(-1));updateHistory(d.id,arr)}}
-else { (async()=>{try{const {initializeApp}=await import('https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js');const {getAuth,signInAnonymously}=await import('https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js');const {getDatabase,onValue,ref,query,orderByChild,limitToLast}=await import('https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js');const firebaseConfig={apiKey:'AIzaSyDgjGCk448HpIYZ2Jis73jsRKHNbo5e_ZA',authDomain:'espcasa-c509a.firebaseapp.com',databaseURL:'https://espcasa-c509a-default-rtdb.firebaseio.com',projectId:'espcasa-c509a',storageBucket:'espcasa-c509a.firebasestorage.app',messagingSenderId:'1079515585625',appId:'1:1079515585625:web:0ad2bd7bbe3272ec79e548',measurementId:'G-5FH6JN41VE'};const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getDatabase(app);await signInAnonymously(auth);firebaseStatus('Firebase conectado','ok');for(const d of DEVICES){onValue(ref(db,`sensores/${d.id}/actual`),snap=>updateActual(d.id,snap.val()),e=>{state.authError=true;updateStatus();firebaseStatus('Sin permiso de lectura','error');console.error('Actual',d.id,e)});onValue(query(ref(db,`sensores/${d.id}/historial`),orderByChild('fecha'),limitToLast(240)),snap=>updateHistory(d.id,snap.val()),e=>{state.authError=true;updateStatus();firebaseStatus('Error leyendo historial','error');console.error('Historial',d.id,e)})}}catch(e){state.authError=true;updateStatus();firebaseStatus('Error conectando Firebase','error');console.error(e)}})()}
+
+function exportarCSV(id){
+  const filas=state.history[id]||[];
+  if(!filas.length){ alert('Aún no se recibieron registros para '+id); return; }
+  const cabeceras=['fecha_bogota','fecha_unix_ms','temperatura_c','humedad_pct','presion_hpa','gas_kohm','wifi_rssi_dbm','wifi_canal'];
+  const fechaISO = ts => typeof ts==='number' ? new Date(ts).toLocaleString('sv-SE',{timeZone:'America/Bogota',hour12:false}).replace(' ','T') : '';
+  const cuerpo=filas.map(r=>[fechaISO(r.fecha),r.fecha,r.temperatura,r.humedad,r.presion_hpa,r.gas_kohm,r.rssi_dbm,r.wifi_canal].map(v=>v ?? '').join(',')).join('\r\n');
+  const csv='\uFEFF'+cabeceras.join(',')+'\r\n'+cuerpo+'\r\n';
+  const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  const a=document.createElement('a');a.href=url;a.download=id+'_ultimos_'+filas.length+'.csv';
+  document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+}
+for(const b of document.querySelectorAll('[data-export]'))
+  b.addEventListener('click',()=>exportarCSV(b.dataset.export));
+if(demoMode){
+  el('demo-banner').classList.add('show');
+  firebaseStatus('Vista de demostración','');
+  globalDiag('Datos simulados: no existe conexión con Firebase en esta vista. Quita ?demo=1 de la dirección para ver lecturas reales.');
+  for(const d of DEVICES){
+    const now=Date.now();
+    const arr=Array.from({length:48},(_,i)=>({fecha:now-(47-i)*30000,temperatura:(d.index==='01'?23.5:25.1)+Math.sin(i/5)*1.3+Math.sin(i*.9)*.16,humedad:(d.index==='01'?54:62)+Math.cos(i/6)*7,presion_hpa:(d.index==='01'?1004:1001)+Math.sin(i/9)*2,gas_kohm:(d.index==='01'?31:42)+Math.cos(i/4)*7,rssi_dbm:-48,wifi_canal:44}));
+    updateActual(d.id,arr.at(-1));updateHistory(d.id,arr);
+    diag(d.id,'demo','Demostración con 48 lecturas simuladas.');
+  }
+}else{
+  if(location.protocol==='file:')globalDiag('Abre el HTML mediante http://localhost:8000, no haciendo doble clic en el archivo. Los módulos y la autenticación web pueden fallar con file://.','diag-warn');
+  (async()=>{
+    try{
+      globalDiag('Cargando Firebase SDK y autenticando al panel...');
+      const {initializeApp}=await import('https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js');
+      const {getAuth,signInAnonymously}=await import('https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js');
+      const {getDatabase,onValue,ref,query,orderByChild,limitToLast}=await import('https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js');
+      const firebaseConfig={apiKey:'AIzaSyDgjGCk448HpIYZ2Jis73jsRKHNbo5e_ZA',authDomain:'espcasa-c509a.firebaseapp.com',databaseURL:'https://espcasa-c509a-default-rtdb.firebaseio.com',projectId:'espcasa-c509a',storageBucket:'espcasa-c509a.firebasestorage.app',messagingSenderId:'1079515585625',appId:'1:1079515585625:web:0ad2bd7bbe3272ec79e548',measurementId:'G-5FH6JN41VE'};
+      const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getDatabase(app);
+      await signInAnonymously(auth);
+      firebaseStatus('Firebase: autenticación correcta','ok');
+      globalDiag('Autenticación anónima correcta. Leyendo sensores/esp32c5_01 y sensores/esp32c5_02. Los datos de sensores/sht31 se conservan por separado.','diag-ok');
+      for(const d of DEVICES){
+        diag(d.id,'auth','Autenticación correcta.');
+        onValue(ref(db,`sensores/${d.id}/actual`),snapshot=>{
+          const value=snapshot.val();
+          if(value){
+            updateActual(d.id,value);
+            diag(d.id,'actual',`Última lectura recibida: ${humanDate(value.fecha)}.`);
+          }else{
+            diag(d.id,'actual',`Ruta sensores/${d.id}/actual vacía. Busca en el Monitor Serie: [FIREBASE] actual: HTTP 200. Revisa también config/owners.`);
+          }
+        },error=>{
+          state.authError=true;updateStatus();
+          diag(d.id,'actual',`Error de lectura en actual: ${error.code||error.message}. Revisa Authentication y las reglas de Realtime Database.`);
+          firebaseStatus('Lectura Firebase rechazada','error');
+          console.error('Lectura actual',d.id,error);
+        });
+        onValue(query(ref(db,`sensores/${d.id}/historial`),orderByChild('fecha'),limitToLast(240)),snapshot=>{
+          const data=snapshot.val();
+          updateHistory(d.id,data);
+          const records=state.history[d.id];
+          if(records.length){
+            diag(d.id,'history',`${records.length} mediciones recibidas del historial.`);
+            // Si falta "actual", mostrar de todas formas la última lectura histórica.
+            if(!state.actual[d.id])updateActual(d.id,records.at(-1));
+          }else{
+            diag(d.id,'history',`Ruta sensores/${d.id}/historial vacía. Busca en el Monitor Serie: [FIREBASE] historial: HTTP 200.`);
+          }
+        },error=>{
+          state.authError=true;updateStatus();
+          diag(d.id,'history',`Error en historial: ${error.code||error.message}. Revisa el permiso .read y el índice fecha.`);
+          firebaseStatus('Error leyendo historial','error');
+          console.error('Lectura historial',d.id,error);
+        });
+      }
+    }catch(error){
+      state.authError=true;updateStatus();
+      firebaseStatus('Error conectando con Firebase','error');
+      const message=`No se pudo autenticar o cargar Firebase: ${error.code||error.message}. Comprueba que Authentication > Anónimo esté habilitado y que esta página se abra desde http://localhost:8000.`;
+      globalDiag(message,'diag-error');
+      for(const d of DEVICES)diag(d.id,'auth',message);
+      console.error(error);
+    }
+  })();
+}
 </script>
 </body>
 </html>
+
